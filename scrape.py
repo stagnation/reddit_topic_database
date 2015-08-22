@@ -7,6 +7,7 @@ import requests
 import time
 import copy
 import subprocess
+import os
 from progress.bar import Bar
 
 
@@ -24,8 +25,9 @@ def get_page_dictio(content):
     ret['title'] = _title
     ret['topic_link'] = get_topic_link(soup)
     ret['description'] = get_description(soup)
-    ret['votes'] = votes_dictio(ret)
+    ret['votes'] = get_votes(soup)
     ret['comments'] = comments_dictio(ret)
+    # ret['comments'] = get_comments(soup)
 
     return ret
 
@@ -62,10 +64,7 @@ def dict_csv_output(page_dict, csvwriter):
     # votes = bytes(votes, 'UTF-8')
     # comments = bytes(comments, 'UTF-8')
 
-    print(title)
-    print(votes)
-    print(comments)
-    csvwriter.writerow([title, votes, comments, topic_link])
+    csvwriter.writerow([votes, comments, title, topic_link])
 
 
 def get_description(soup):
@@ -83,6 +82,7 @@ def get_description(soup):
 
 
 def get_topic_link(soup):
+    redditbase = 'http://www.reddit.com'
     link = None
 
     tags = soup.find_all('a')
@@ -94,11 +94,39 @@ def get_topic_link(soup):
         except KeyError:
             pass
 
+    if str(link).startswith('/r/'):
+        link = redditbase + link
+
     return link
 
 
-def votes_dictio(dictio):
-    return votes(dictio['description'])
+def get_comments(soup):
+    comments = None
+
+    tags = soup.find_all('a')
+    for tag in tags:
+        try:
+            attribute = tag['class']
+        except:
+            pass
+
+    return comments
+
+
+def get_votes(soup):
+    votes = -1
+
+    tags = soup.find_all('div')
+    for tag in tags:
+        try:
+            attribute = tag['class']
+            if attribute == ['score', 'unvoted']:
+                votes = tag.string
+                votes = int(votes)
+        except:
+            pass
+
+    return votes
 
 
 def comments_dictio(dictio):
@@ -113,24 +141,16 @@ def number_from_left(instring):
     return int(nums), base
 
 
-def votes(description):
-    try:
-        votes, _ = number_from_left(description)
-    except:
-        votes = 0
-    return votes
-
-
 def comments(description):
     if not description:
-        return 0
+        return -1
 
     pat = '(\d+) comments'
     match = re.search(pat, description)
     if match:
         return match.group(1)
     else:
-        return 0
+        return -1
 
 
 def parse_bookmarks(bookmark_html):
@@ -157,16 +177,18 @@ def get_webpage(link, outputfile=None):
     if not isinstance(outputfile, str):
         outputfile = str(outputfile)
 
-    args = ['wget', link, '-O', outputfile, '-o', outputfile + '.log']
-    stdout, stderr = subprocess.Popen(args).communicate()
-    if stderr:
-        print(stderr)
+    if not os.path.isfile(outputfile):
+        wait()
+        args = ['wget', link, '-O', outputfile, '-o', outputfile + '.log']
+        stdout, stderr = subprocess.Popen(args).communicate()
+        if stderr:
+            print(stderr)
 
     try:
         with open(outputfile, 'r') as op:
             content = op.read()
     except:
-        print("error reading: ", outputfile)
+        print("\nerror reading: ", outputfile)
         print(link)
         return None
 
@@ -178,11 +200,9 @@ def sort_insert(inlist, inelem, sort=None):
     insertflag = False
     li = inlist
 
-    print(inelem)
-
     if sort:
         for idx, e in enumerate(li):
-            if sort(inelem) > sort(e):
+            if sort(inelem) >= sort(e):
                 li.insert(idx, inelem)
                 insertflag = True
                 break
@@ -221,9 +241,7 @@ def build_database(links, max_items=None):
         if idx >= max_items:
             break
 
-        wait()
         outname = str(idx) + '.html'
-        print("parsing", url, outname)
         content = get_webpage(url, outname)
         dictio = get_page_dictio(content)
 
@@ -241,12 +259,9 @@ def main():
     outputfile = 'data.csv'
     links = parse_bookmarks(bookmark_file)
 
-    max_items = 100
+    max_items = len(links)
     database = build_database(links, max_items)
     write_csv_output(outputfile, database)
-
-    # for url in links:
-    #     print(url)
 
     # link = links[0]
     # print(link)
@@ -255,8 +270,7 @@ def main():
     # print(webpage)
     # page_list = get_page_dictio(webpage)
 
-
-    # page = '0.html'
+    # page = '227.html'
     # with open(page, 'r') as file:
     #     content = file.read()
     # page_list = get_page_dictio(content)
