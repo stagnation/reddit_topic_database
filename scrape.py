@@ -255,7 +255,7 @@ def build_database(links, max_items=None):
 
 
 def main():
-    bookmark_file = 'bookmarks.html'
+    bookmark_file = 'musik.html'
     outputfile = 'data.csv'
     links = parse_bookmarks(bookmark_file)
 
