@@ -3,11 +3,10 @@
 from bs4 import BeautifulSoup as bs
 import re
 import csv
-import requests
 import time
-import copy
 import subprocess
 import os
+from wait import wait
 from progress.bar import Bar
 
 
@@ -170,7 +169,7 @@ def parse_bookmarks(bookmark_html):
 #     return content
 
 
-def get_webpage(link, outputfile=None):
+def get_webpage(link, requesttimer, outputfile=None):
 
     if not outputfile:
         outputfile = 'index.html'
@@ -178,7 +177,7 @@ def get_webpage(link, outputfile=None):
         outputfile = str(outputfile)
 
     if not os.path.isfile(outputfile):
-        wait()
+        requesttimer.next()
         args = ['wget', link, '-O', outputfile, '-o', outputfile + '.log']
         stdout, stderr = subprocess.Popen(args).communicate()
         if stderr:
@@ -225,10 +224,6 @@ def test_sort():
     print(ll)
 
 
-def wait():
-    time.sleep(3)
-
-
 def build_database(links, max_items=None):
     if not max_items:
         max_items = len(links)
@@ -237,12 +232,13 @@ def build_database(links, max_items=None):
     sort = lambda d: d['votes']
 
     bar = Bar("processing", max=max_items)
+    requesttimer = wait(2000)
     for idx, url in enumerate(links):
         if idx >= max_items:
             break
 
         outname = str(idx) + '.html'
-        content = get_webpage(url, outname)
+        content = get_webpage(url, requesttimer, outname)
         dictio = get_page_dictio(content)
 
         if dictio:
