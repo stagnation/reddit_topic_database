@@ -3,10 +3,10 @@
 from bs4 import BeautifulSoup as bs
 import re
 import csv
-import time
 import subprocess
 import os
 from wait import wait
+from lib import bin_sort_ins
 from progress.bar import Bar
 
 
@@ -194,42 +194,12 @@ def get_webpage(link, requesttimer, outputfile=None):
     return content
 
 
-def sort_insert(inlist, inelem, sort=None):
-    # TODO : binatu search
-    insertflag = False
-    li = inlist
-
-    if sort:
-        for idx, e in enumerate(li):
-            if sort(inelem) >= sort(e):
-                li.insert(idx, inelem)
-                insertflag = True
-                break
-
-    # catches input that had he least sort value
-    # acts as default for when no sort is given
-    if not insertflag:
-        li.append(inelem)
-
-    return li
-
-
-def test_sort():
-    li = [1, 2, 3, 4, 5, 6, 7, 8]
-    e = 3
-    s = None
-    s = lambda x:  x
-    ll = sort_insert(li, e, s)
-    print(li)
-    print(ll)
-
-
 def build_database(links, max_items=None):
     if not max_items:
         max_items = len(links)
 
     li = []
-    sort = lambda d: d['votes']
+    sort = lambda di: di['votes']
 
     bar = Bar("processing", max=max_items)
     requesttimer = wait(2000)
@@ -242,7 +212,7 @@ def build_database(links, max_items=None):
         dictio = get_page_dictio(content)
 
         if dictio:
-            li = sort_insert(li, dictio, sort)
+            li = bin_sort_ins(li, dictio, sort)
 
         bar.next()
     bar.finish()
