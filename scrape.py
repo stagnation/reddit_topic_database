@@ -194,6 +194,32 @@ def get_webpage(link, requesttimer, outputfile=None):
     return content
 
 
+def read_csv_to_database(csvfile, *args, **kwargs):
+
+    database = []
+    sort = lambda di: di['votes']
+
+    with open(csvfile, "r") as filehandle:
+        csvreader = csv.reader(filehandle, *args,
+                delimiter=',', quotechar='"',
+                quoting=csv.QUOTE_MINIMAL, **kwargs)
+
+        for row in csvreader:
+            page_dict = {}
+            page_dict['votes'] = row[0]
+            page_dict['comments'] = row[1]
+            page_dict['title'] = row[2]
+            page_dict['topic_link'] = row[3]
+
+            database = bin_sort_ins(database, page_dict, sort)
+
+    return database
+
+
+def remove_duplicates(database):
+    return None
+
+
 def build_database(links, max_items=None):
     if not max_items:
         max_items = len(links)
@@ -207,7 +233,8 @@ def build_database(links, max_items=None):
         if idx >= max_items:
             break
 
-        outname = str(idx) + '.html'
+        # outname = str(idx) + '.html'
+        outname = 'dl/' + str(idx) + '.html'
         content = get_webpage(url, requesttimer, outname)
         dictio = get_page_dictio(content)
 
@@ -221,15 +248,18 @@ def build_database(links, max_items=None):
 
 
 def main():
-    bookmark_file = 'musik.html'
-    outputfile = 'data.csv'
-    links = parse_bookmarks(bookmark_file)
+    db = read_csv_to_database('data.csv')
+    print(db)
 
-    max_items = len(links)
-    database = build_database(links, max_items)
-    write_csv_output(outputfile, database)
+    # bookmark_file = 'musik.html'
+    # outputfile = 'data.csv'
+    # links = parse_bookmarks(bookmark_file)
 
-    # link = links[0]
+    # max_items = len(links)
+    # database = build_database(links, max_items)
+    # write_csv_output(outputfile, database)
+
+    ## link = links[0]
     # print(link)
     # wait()
     # webpage = get_webpage(link)
