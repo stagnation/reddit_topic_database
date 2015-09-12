@@ -2,6 +2,7 @@
 
 from bs4 import BeautifulSoup as bs
 import re
+import argparse
 import csv
 import subprocess
 import os
@@ -10,7 +11,7 @@ from lib import bin_sort_ins
 from progress.bar import Bar
 
 
-def get_page_dictio(content):
+def get_page_dictio(content, url):
     if not content:
         return None
     soup = bs(content, 'html.parser')
@@ -26,6 +27,7 @@ def get_page_dictio(content):
     ret['description'] = get_description(soup)
     ret['votes'] = get_votes(soup)
     ret['comments'] = comments_dictio(ret)
+    ret['url'] = name(url)
     # ret['comments'] = get_comments(soup)
 
     return ret
@@ -153,6 +155,7 @@ def comments(description):
 
 
 def parse_bookmarks(bookmark_html):
+    print("reading from ", bookmark_html)
     with open(bookmark_html, 'r') as book:
         content = book.read()
     soup = bs(content, 'html.parser')
@@ -206,8 +209,8 @@ def read_csv_to_database(csvfile, *args, **kwargs):
 
         for row in csvreader:
             page_dict = {}
-            page_dict['votes'] = row[0]
-            page_dict['comments'] = row[1]
+            page_dict['votes'] = int(row[0])
+            page_dict['comments'] = int(row[1])
             page_dict['title'] = row[2]
             page_dict['topic_link'] = row[3]
 
@@ -220,11 +223,16 @@ def remove_duplicates(database):
     return None
 
 
-def build_database(links, max_items=None):
+def name(url):
+    return url.replace('/',"").replace('.', "").replace(':',"")
+    # return url.translate(str.maketrans("", "", "/.:#;"))
+
+
+def build_database(links, database, max_items=None):
+    print(len(database))
     if not max_items:
         max_items = len(links)
 
-    li = []
     sort = lambda di: di['votes']
 
     bar = Bar("processing", max=max_items)
@@ -234,24 +242,44 @@ def build_database(links, max_items=None):
             break
 
         # outname = str(idx) + '.html'
-        outname = 'dl/' + str(idx) + '.html'
+        # outname = 'dl/' + str(idx) + '.html'
+        outname = 'dl/' + name(url)
         content = get_webpage(url, requesttimer, outname)
-        dictio = get_page_dictio(content)
+        dictio = get_page_dictio(content, url)
 
         if dictio:
-            li = bin_sort_ins(li, dictio, sort)
+            database = bin_sort_ins(database, dictio, sort)
 
         bar.next()
     bar.finish()
 
-    return li
+    return database
 
 
 def main():
-    db = read_csv_to_database('data.csv')
-    print(db)
+    parser = argparse.ArgumentParser(description="reddit scraper, sort topic in upvote order")
 
-    # bookmark_file = 'musik.html'
+    parser.add_argument('-x', '--extend',
+                        help="extends existing database with new input",
+                        )
+    parser.add_argument('-o', '--output',
+                        help="output file",
+                        default="data2.csv",
+                        )
+
+    args, inputfiles = parser.parse_known_args()
+    if args.extend:
+        database = read_csv_to_database(args.extend)
+    else:
+        database = []
+
+    for inputfile in inputfiles:
+        links = parse_bookmarks(inputfile)
+        database = build_database(links, database)
+
+    write_csv_output(args.output, database)
+
+
     # outputfile = 'data.csv'
     # links = parse_bookmarks(bookmark_file)
 

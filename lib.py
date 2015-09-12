@@ -1,5 +1,6 @@
 #!/bin/python3
 import math
+import sys
 
 
 def sort_insert(inlist, inelem, sort=None):
@@ -41,14 +42,22 @@ def bin_sort_rec(inlist, inelem, start, end, sort):
     mid = math.floor(mid)
     pivote = inlist[mid]
 
-    if sort(inelem) == sort(pivote):
-        inlist.insert(mid, inelem)
-        return inlist
+    try:
+        if sort(inelem) == sort(pivote):
+            inlist.insert(mid, inelem)
+            return inlist
 
-    elif sort(inelem) > sort(pivote):
-        return bin_sort_rec(inlist, inelem, start, mid, sort)
-    elif sort(inelem) < sort(pivote):
-        return bin_sort_rec(inlist, inelem, mid, end, sort)
+        elif sort(inelem) > sort(pivote):
+            return bin_sort_rec(inlist, inelem, start, mid, sort)
+        elif sort(inelem) < sort(pivote):
+            return bin_sort_rec(inlist, inelem, mid, end, sort)
+    # except Exception as e:
+    except IOError as e:
+        print("\ncould not sort")
+        print(inelem)
+        print(e)
+        inlist.append(inelem)
+        return inlist
 
 
 def bin_sort_ins(inlist, inelem, sort=None):
