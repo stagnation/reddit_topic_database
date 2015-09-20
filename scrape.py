@@ -28,6 +28,14 @@ def get_page_dictio(content, url):
     ret['votes'] = get_votes(soup)
     ret['comments'] = comments_dictio(ret)
     ret['url'] = name(url)
+
+    """ also save bandcamp pages as if they were links """
+
+    # if not topic_link:
+    #     if 'bandcamp' in url:
+    #         ret['topic_link'] = ret['url']
+
+
     # ret['comments'] = get_comments(soup)
 
     return ret
@@ -220,7 +228,17 @@ def read_csv_to_database(csvfile, *args, **kwargs):
 
 
 def remove_duplicates(database):
-    return None
+    # removes identical reddit pages,
+    # not different pages that link to the same location
+    no_dups = []
+    equal = lambda x, y: x['title'] == y['title']
+
+    for idx, elem in enumerate(database):
+        last = database[idx -1]
+        if not equal(elem, last):
+            no_dups.append(elem)
+
+    return no_dups
 
 
 def name(url):
@@ -229,7 +247,6 @@ def name(url):
 
 
 def build_database(links, database, max_items=None):
-    print(len(database))
     if not max_items:
         max_items = len(links)
 
@@ -277,6 +294,7 @@ def main():
         links = parse_bookmarks(inputfile)
         database = build_database(links, database)
 
+    database = remove_duplicates(database)
     write_csv_output(args.output, database)
 
 
