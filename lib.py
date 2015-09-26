@@ -73,6 +73,43 @@ def bin_sort_ins(inlist, inelem, sort=None):
         return bin_sort_rec(inlist, inelem, start, end, sort)
 
 
+def quicksort(inlist, func):
+    print(inlist)
+
+    if not inlist:
+        return None
+    if len(inlist) <= 1:
+        return inlist
+
+    pivot = inlist[0]
+    large = []
+    small = []
+    for x in inlist[1:]:
+        if x > pivot:
+            large.append(x)
+        else:
+            small.append(x)
+
+    r_small = quicksort(small, func)
+    r_large = quicksort(large, func)
+
+    print("sm", r_small)
+    print("lg", r_large)
+
+    if r_small:
+        if r_large:
+            ret = r_small + [pivot] + r_large
+        else:
+            ret = r_small + [pivot]
+    else:
+        if r_large:
+            ret = [pivot] + r_large
+        else:
+            ret = [pivot]
+
+    print("ret", ret)
+    return ret
+
 
 def test_sort(e):
     li = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -83,9 +120,18 @@ def test_sort(e):
     return ll
 
 
+def test_quick():
+    li = [1,8,3,4,2,5,9,0]
+    func = lambda x: x
+    ll = quicksort(li, func)
+    print(li)
+    print(ll)
+
 if __name__ == '__main__':
-    for x in range(10):
-        try:
-            test_sort(x)
-        except:
-            pass
+    test_quick()
+
+    # for x in range(10):
+    #     try:
+    #         test_sort(x)
+    #     except:
+    #         pass
