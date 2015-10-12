@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 from bs4 import BeautifulSoup as bs
 import re
@@ -230,15 +230,8 @@ def read_csv_to_database(csvfile, *args, **kwargs):
 
 
 def remove_duplicates(database):
-    # removes identical reddit pages,
-    # not different pages that link to the same location
-    no_dups = []
-    equal = lambda x, y: x['title'] == y['title']
-
-    for idx, elem in enumerate(database):
-        last = database[idx -1]
-        if not equal(elem, last):
-            no_dups.append(elem)
+    tups = [tuple(sorted(d.items())) for d in database]
+    no_dups = [dict(t) for t in set(tups)]
 
     return no_dups
 
@@ -300,11 +293,12 @@ def main():
         links = parse_bookmarks(inputfile)
         database = build_database(links, database)
 
+    database = remove_duplicates(database)
+
     sort = lambda di: di['votes']
     database = quicksort(database, sort)
-    database = remove_duplicates(database)
-    write_csv_output(args.output, database)
 
+    write_csv_output(args.output, database)
 
     # outputfile = 'data.csv'
     # links = parse_bookmarks(bookmark_file)
