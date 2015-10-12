@@ -74,7 +74,6 @@ def bin_sort_ins(inlist, inelem, sort=None):
 
 
 def quicksort(inlist, func):
-    print(inlist)
 
     if not inlist:
         return None
@@ -85,16 +84,13 @@ def quicksort(inlist, func):
     large = []
     small = []
     for x in inlist[1:]:
-        if x > pivot:
+        if func(x) < func(pivot):
             large.append(x)
         else:
             small.append(x)
 
     r_small = quicksort(small, func)
     r_large = quicksort(large, func)
-
-    print("sm", r_small)
-    print("lg", r_large)
 
     if r_small:
         if r_large:
@@ -107,7 +103,6 @@ def quicksort(inlist, func):
         else:
             ret = [pivot]
 
-    print("ret", ret)
     return ret
 
 

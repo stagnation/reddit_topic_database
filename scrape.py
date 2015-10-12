@@ -7,7 +7,7 @@ import csv
 import subprocess
 import os
 from wait import wait
-from lib import bin_sort_ins
+from lib import quicksort
 from progress.bar import Bar
 
 
@@ -27,7 +27,8 @@ def get_page_dictio(content, url):
     ret['description'] = get_description(soup)
     ret['votes'] = get_votes(soup)
     ret['comments'] = comments_dictio(ret)
-    ret['url'] = name(url)
+    ret['filename'] = name(url)
+    ret['url'] = url
 
     """ also save bandcamp pages as if they were links """
 
@@ -68,12 +69,13 @@ def dict_csv_output(page_dict, csvwriter):
     votes = page_dict['votes']
     comments = page_dict['comments']
     topic_link = page_dict['topic_link']
+    url = page_dict['url']
 
     # title = bytes(title, 'UTF-8')
     # votes = bytes(votes, 'UTF-8')
     # comments = bytes(comments, 'UTF-8')
 
-    csvwriter.writerow([votes, comments, title, topic_link])
+    csvwriter.writerow([votes, comments, title, topic_link, url])
 
 
 def get_description(soup):
@@ -208,7 +210,6 @@ def get_webpage(link, requesttimer, outputfile=None):
 def read_csv_to_database(csvfile, *args, **kwargs):
 
     database = []
-    sort = lambda di: di['votes']
 
     with open(csvfile, "r") as filehandle:
         csvreader = csv.reader(filehandle, *args,
@@ -221,8 +222,9 @@ def read_csv_to_database(csvfile, *args, **kwargs):
             page_dict['comments'] = int(row[1])
             page_dict['title'] = row[2]
             page_dict['topic_link'] = row[3]
+            page_dict['url'] = row[4]
 
-            database = bin_sort_ins(database, page_dict, sort)
+            database.append(page_dict)
 
     return database
 
@@ -265,7 +267,7 @@ def build_database(links, database, max_items=None):
         dictio = get_page_dictio(content, url)
 
         if dictio:
-            database = bin_sort_ins(database, dictio, sort)
+            database.append(dictio)
 
         bar.next()
     bar.finish()
@@ -285,6 +287,10 @@ def main():
                         )
 
     args, inputfiles = parser.parse_known_args()
+    if not inputfiles:
+        parser.print_usage()
+        exit(1)
+
     if args.extend:
         database = read_csv_to_database(args.extend)
     else:
@@ -294,6 +300,8 @@ def main():
         links = parse_bookmarks(inputfile)
         database = build_database(links, database)
 
+    sort = lambda di: di['votes']
+    database = quicksort(database, sort)
     database = remove_duplicates(database)
     write_csv_output(args.output, database)
 
