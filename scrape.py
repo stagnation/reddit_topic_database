@@ -12,6 +12,10 @@ from progress.bar import Bar
 
 
 def get_page_dictio(content, url):
+    """
+    generates a dictionary with important information from the
+    contents of a (web)page.
+    """
     if not content:
         return None
     soup = bs(content, 'html.parser')
@@ -30,26 +34,29 @@ def get_page_dictio(content, url):
     ret['filename'] = name(url)
     ret['url'] = url
 
-    """ also save bandcamp pages as if they were links """
-
+    # """ also save bandcamp pages as if they were links """
     # if not topic_link:
     #     if 'bandcamp' in url:
     #         ret['topic_link'] = ret['url']
 
-
-    # ret['comments'] = get_comments(soup)
-
     return ret
 
 
-def ensure_list(input):
-    if isinstance(input, list):
+def ensure_list(input_):
+    """
+    ensures input_ is a list
+    if not, wraps it in a list
+    """
+    if isinstance(input_, list):
         return input
     else:
         return [input]
 
 
 def write_csv_output(outputfile, page_list, *args, **kwargs):
+    """
+    writes a list of page dictionaries to a csv file
+    """
 
     # default_delim = ','
     # if 'delimiter' not in kwargs.keys():
@@ -65,6 +72,9 @@ def write_csv_output(outputfile, page_list, *args, **kwargs):
 
 
 def dict_csv_output(page_dict, csvwriter):
+    """
+    writes csv line for a single page_dict
+    """
     title = page_dict['title']
     votes = page_dict['votes']
     comments = page_dict['comments']
@@ -79,6 +89,9 @@ def dict_csv_output(page_dict, csvwriter):
 
 
 def get_description(soup):
+    """
+    finds the description attribute of a page, soup
+    """
     desc = None
 
     tags = soup.find_all('meta')
@@ -93,6 +106,9 @@ def get_description(soup):
 
 
 def get_topic_link(soup):
+    """
+    finds the topic link for a page, soup
+    """
     redditbase = 'http://www.reddit.com'
     link = None
 
@@ -111,20 +127,10 @@ def get_topic_link(soup):
     return link
 
 
-def get_comments(soup):
-    comments = None
-
-    tags = soup.find_all('a')
-    for tag in tags:
-        try:
-            attribute = tag['class']
-        except:
-            pass
-
-    return comments
-
-
 def get_votes(soup):
+    """
+    finds number of upvotes in a page, soup
+    """
     votes = -1
 
     tags = soup.find_all('div')
@@ -153,6 +159,9 @@ def number_from_left(instring):
 
 
 def comments(description):
+    """
+    finds number of comments in a page, soup
+    """
     if not description:
         return -1
 
@@ -165,6 +174,10 @@ def comments(description):
 
 
 def parse_bookmarks(bookmark_html):
+    """
+    parse bookmark file for links
+    """
+
     print("reading from ", bookmark_html)
     with open(bookmark_html, 'r') as book:
         content = book.read()
@@ -183,6 +196,10 @@ def parse_bookmarks(bookmark_html):
 
 
 def get_webpage(link, requesttimer, outputfile=None):
+    """
+    downloads webpages
+    keeps track with requesttimer to not send requests too quickly
+    """
 
     if not outputfile:
         outputfile = 'index.html'
@@ -192,13 +209,13 @@ def get_webpage(link, requesttimer, outputfile=None):
     if not os.path.isfile(outputfile):
         requesttimer.next()
         args = ['wget', link, '-O', outputfile, '-o', outputfile + '.log']
-        stdout, stderr = subprocess.Popen(args).communicate()
+        _, stderr = subprocess.Popen(args).communicate()
         if stderr:
             print(stderr)
 
     try:
-        with open(outputfile, 'r') as op:
-            content = op.read()
+        with open(outputfile, 'r') as ofile:
+            content = ofile.read()
     except:
         print("\nerror reading: ", outputfile)
         print(link)
@@ -208,13 +225,16 @@ def get_webpage(link, requesttimer, outputfile=None):
 
 
 def read_csv_to_database(csvfile, *args, **kwargs):
+    """
+    reads list of dictionaries from a csvfile
+    """
 
     database = []
 
     with open(csvfile, "r") as filehandle:
         csvreader = csv.reader(filehandle, *args,
-                delimiter=',', quotechar='"',
-                quoting=csv.QUOTE_MINIMAL, **kwargs)
+                               delimiter=',', quotechar='"',
+                               quoting=csv.QUOTE_MINIMAL, **kwargs)
 
         for row in csvreader:
             page_dict = {}
@@ -269,7 +289,8 @@ def build_database(links, database, max_items=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="reddit scraper, sort topic in upvote order")
+    parser = argparse.ArgumentParser(description="reddit scraper, \
+                                     sort topic in upvote order")
 
     parser.add_argument('-x', '--extend',
                         help="extends existing database with new input",
