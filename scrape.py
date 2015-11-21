@@ -48,9 +48,9 @@ def ensure_list(input_):
     if not, wraps it in a list
     """
     if isinstance(input_, list):
-        return input
+        return input_
     else:
-        return [input]
+        return [input_]
 
 
 def write_csv_output(outputfile, page_list, *args, **kwargs):
@@ -67,8 +67,8 @@ def write_csv_output(outputfile, page_list, *args, **kwargs):
         csvwriter = csv.writer(csvfile, *args, delimiter=',',
                                quotechar='"',
                                quoting=csv.QUOTE_MINIMAL, **kwargs)
-        for page in page_list:
-            dict_csv_output(page, csvwriter)
+        for page_ in page_list:
+            dict_csv_output(page_, csvwriter)
 
 
 def dict_csv_output(page_dict, csvwriter):
@@ -320,28 +320,6 @@ def main():
     database = quicksort(database, sort)
 
     write_csv_output(args.output, database)
-
-    # outputfile = 'data.csv'
-    # links = parse_bookmarks(bookmark_file)
-
-    # max_items = len(links)
-    # database = build_database(links, max_items)
-    # write_csv_output(outputfile, database)
-
-    ## link = links[0]
-    # print(link)
-    # wait()
-    # webpage = get_webpage(link)
-    # print(webpage)
-    # page_list = get_page_dictio(webpage)
-
-    # page = '227.html'
-    # with open(page, 'r') as file:
-    #     content = file.read()
-    # page_list = get_page_dictio(content)
-    # outputfile = 'out.csv'
-    # write_csv_output(outputfile, page_list)
-    # print(page_list)
 
 if __name__ == '__main__':
     # test_sort()
