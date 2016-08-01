@@ -84,9 +84,14 @@ def quicksort(inlist, func):
     large = []
     small = []
     for x in inlist[1:]:
-        if func(x) < func(pivot):
-            large.append(x)
-        else:
+        try:
+            if func(x) < func(pivot):
+                large.append(x)
+            else:
+                small.append(x)
+        except TypeError as e:
+            # if types are unorderable, most often a None field,
+            # put x in small and let it sink to the bottom
             small.append(x)
 
     r_small = quicksort(small, func)
