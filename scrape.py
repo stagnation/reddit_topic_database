@@ -185,7 +185,11 @@ def parse_bookmarks(bookmark_html):
     retlinks = []
     links = soup.find_all('a')
     for link in links:
-        retlinks.append(link['href'])
+        try:
+            retlinks.append(link['href'])
+        except:
+            print('href error in {}'.format(bookmark_html))
+            print('> {}'.format(link))
     return retlinks
 
 
