@@ -9,6 +9,7 @@ import os
 from wait import wait
 from lib import quicksort
 from progress.bar import Bar
+from collections import defaultdict
 
 
 def get_page_dictio(content, url):
@@ -24,7 +25,7 @@ def get_page_dictio(content, url):
     try:
         _title = soup.title.string
     except:
-        _title = None
+        _title = ""
 
     ret['title'] = _title
     ret['topic_link'] = get_topic_link(soup)
@@ -193,12 +194,6 @@ def parse_bookmarks(bookmark_html):
     return retlinks
 
 
-# def get_webpage(link):
-#     r = requests.get(link)
-#     content = r.text
-#     return content
-
-
 def get_webpage(link, requesttimer, outputfile=None):
     """
     downloads webpages
@@ -241,12 +236,16 @@ def read_csv_to_database(csvfile, *args, **kwargs):
                                quoting=csv.QUOTE_MINIMAL, **kwargs)
 
         for row in csvreader:
-            page_dict = {}
-            page_dict['votes'] = int(row[0])
-            page_dict['comments'] = int(row[1])
-            page_dict['title'] = row[2]
-            page_dict['topic_link'] = row[3]
-            page_dict['url'] = row[4]
+            try:
+                page_dict = {}
+                page_dict['votes'] = int(row[0])
+                page_dict['comments'] = int(row[1])
+                page_dict['title'] = row[2]
+                page_dict['topic_link'] = row[3]
+                page_dict['url'] = row[4]
+            except:
+                print("error processing row {}".format(row))
+                exit(1)
 
             database.append(page_dict)
 
@@ -258,6 +257,31 @@ def remove_duplicates(database):
     no_dups = [dict(t) for t in set(tups)]
 
     return no_dups
+
+
+def remove_duplicate_yt(database):
+    group_dict = group_by_key(database, "topic_link")
+
+    _database = []
+    for k in group_dict.keys():
+        candidates = group_dict[k]
+        candidates = quicksort(candidates, lambda x: x['votes'])
+        _database.append(candidates[0])
+
+    return(_database)
+
+
+def group_by_key(database, key, sort_P=True):
+    if sort_P:
+        sort = lambda di: di['topic_link']
+        database = quicksort(database, sort)
+
+    grouped_dict = defaultdict(list)
+    for item in database:
+        idx = item[key]
+        grouped_dict[idx].append(item)
+
+    return grouped_dict
 
 
 def name(url):
@@ -314,14 +338,19 @@ def main():
     else:
         database = []
 
+
     for inputfile in inputfiles:
         links = parse_bookmarks(inputfile)
         database = build_database(links, database)
 
-    database = remove_duplicates(database)
+    # database = remove_duplicates(database)
 
+    print(len(database))
     sort = lambda di: di['votes']
     database = quicksort(database, sort)
+
+    database = remove_duplicate_yt(database)
+    print(len(database))
 
     write_csv_output(args.output, database)
 
